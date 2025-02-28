@@ -1,6 +1,7 @@
-from ghvFunctions import newtonRaphson, newMach, thermoProperties, prandtlMeyerAngle, prandtlMeyerMach
+from ghvFunctions import *
 import pandas as pd
 import math
+from matplotlib import pyplot as plt
 
 # Code By Felipe Diogo Moura Silva :)
 
@@ -12,7 +13,7 @@ M_in        = 6.8            # Mach regime
 rho_in      = 0.01841        # Freestream air density
 p_in        = 1197.0         # Freestream pressure
 T_in        = 226.5          # Freestream temperature
-a           = 301.7          # Speed of sound in air
+a           = 301.7          # Speed of sound in 
 gamma       = 1.4            # Specific Heat Ratio
 R           = 287.0          # Ideal gas constant
 
@@ -31,7 +32,7 @@ while True:
 i=1
 
 # creating the columns for the dataframe and a empty list to store the data
-columns = ["Theta", "Beta", "Mach", "Pressure Ratio", "Rho Ratio", "Temperature Ratio", "Rho Out", "P Out", "T Out"]
+columns = ["Theta", "Beta", "Mach", "Pressure Ratio", "Rho Ratio", "Temperature Ratio", "Rho Out", "P Out", "T Out", "a", "u"]
 data = []
 
 # ********************************************************************************
@@ -39,7 +40,7 @@ data = []
 # ********************************************************************************
 for i in range(1, rampNumber + 1):
    
-    
+
     # loop to get the angle of the ramp without errors
     while True:
         try:
@@ -56,8 +57,8 @@ for i in range(1, rampNumber + 1):
     rho_in = rho_in * rhoRatio
     p_in = p_in * pressureRatio
     T_in = T_in * temperatureRatio
-
-
+    a = soundSpeedInAir(T_in, gamma, R)
+    u = mach * a
     # sToring the data in the created list
     data.append([
         round(theta, 2), 
@@ -68,7 +69,9 @@ for i in range(1, rampNumber + 1):
         round(temperatureRatio, 2),
         round(rho_in, 2),
         round(p_in, 2),
-        round(T_in, 2)
+        round(T_in, 2), 
+        round(a, 2),
+        round(u, 2)
     ])
     M_in = mach
 
@@ -96,6 +99,23 @@ pressureRatioReflection, rhoRatioReflection, temperatureRatioReflection = thermo
 rhoOutputReflection         = rhoInputReflection * rhoRatioReflection
 pOutputReflection           = pInputReflection * pressureRatioReflection
 TOutputReflection           = TInputReflection * temperatureRatioReflection
+a = soundSpeedInAir(TOutputReflection, gamma, R)
+u = machOutputReflection * a
+
+# Generalizing the height calculation for n ramps
+gapHeight = 0.01841
+hTotal = (0.380 / 2) - gapHeight
+rampHeights = []
+
+for i in range(rampNumber):
+
+    hRamp = hTotal / math.tan(math.radians(allData["Beta"].iloc[i])) 
+    rampHeights.append(hRamp)
+
+print("\nHeight of the ramps:\n")
+for i, hRamp in enumerate(rampHeights, start=1):
+    print(f"Ramp {i}: {round(hRamp, 2)}")
+
 
 # Creating a new row for the reflection data
 new_row = pd.DataFrame([{
@@ -107,7 +127,9 @@ new_row = pd.DataFrame([{
     "Temperature Ratio": round(temperatureRatioReflection, 2),
     "Rho Out": round(rhoOutputReflection, 2),
     "P Out": round(pOutputReflection, 2),
-    "T Out": round(TOutputReflection, 2)
+    "T Out": round(TOutputReflection, 2), 
+    "a": round(a, 2),
+    "u": round(u, 2)
 }])
 
 # Adding the reflection data to the main dataframe
@@ -115,6 +137,16 @@ allData = pd.concat([allData, new_row], ignore_index=True)
 
 print("\nFinal values with reflection:\n")
 print(allData)
+
+# Writing the final values with reflection to a file
+with open("output.txt", "w") as file:
+    file.write("Final values with reflection:\n")
+    file.write(allData.to_string(index=False))
+    file.write("\n------\n")
+    file.write("Height of the ramps:\n")
+    for i, hRamp in enumerate(rampHeights, start=1):
+        file.write(f"Ramp {i}: {round(hRamp, 2)}\n")
+    file.write("\n------\n")
 
 # ******************************************************************************
 # ----> EXHAUST: Exhaust calculations w/ Prandtl-Meyer equations <-----
@@ -125,18 +157,20 @@ columnsExhaust = ["Final Area", "Mach", "Prandtl-Meyer Angle", "Exhaust Lenght"]
 dataExhaust = []
 
 # loop parameters
-initStepFinalArea   = 0.100
+initStepFinalArea   = 0.075
 finalStepFinalArea  = 1.500
 incrementFinalArea  = 0.050
 
 finalArea = float(initStepFinalArea)
 finalArea = float(finalArea)
 
+throatArea = (allData["Rho Out"].iloc[0]*(allData["Mach"].iloc[0] * a)) / allData["Mach"].iloc[-1]
+
 while finalArea <= finalStepFinalArea:
     # Prandtl-Meyer function call
-    exhaustMach         = prandtlMeyerMach(gamma, throatArea=0.01841, finalArea=finalArea)
+    exhaustMach         = prandtlMeyerMach(gamma, throatArea=(0.01841), finalArea=finalArea)
     exhaustAngle        = prandtlMeyerAngle(exhaustMach, gamma)
-    exhaustLength       = finalArea / math.tan(math.radians(exhaustAngle))
+    exhaustLength       = (finalArea/2) / math.tan(math.radians(exhaustAngle))
     dataExhaust.append([round(finalArea, 2), round(exhaustMach, 2), round(exhaustAngle, 2), round(exhaustLength, 2)])
     finalArea += incrementFinalArea
     
@@ -146,3 +180,7 @@ exhaustData = pd.DataFrame(dataExhaust, columns=columnsExhaust)
 print("\nExhaust data:\n")
 print(exhaustData)
 
+with open("output.txt", "a") as file:
+    file.write("Exhaust data:\n")
+    file.write(exhaustData.to_string(index=False))
+    file.write("\n------\n")

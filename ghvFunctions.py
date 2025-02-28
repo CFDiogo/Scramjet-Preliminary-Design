@@ -68,8 +68,12 @@ def thermoProperties(M, gamma, beta):
     rhoRatio            = float((util1 * util2)/(2 + util3*util1))
     temperatureRatio    = float((1 + ((2*gamma)/util2)*(util1 - 1))*((2 + util3*util1)/(util1*util2)))
 
-
     return pressureRatio, rhoRatio, temperatureRatio
+
+def soundSpeedInAir(T, gamma, R):
+
+    x                  =   float((T* gamma* R)**0.5)
+    return x
 def prandtlMeyerAngle(M, gamma):
     
     '''
@@ -86,6 +90,7 @@ def prandtlMeyerAngle(M, gamma):
 
     return float(math.degrees(prandtlMeyerAngle))
 def prandtlMeyerMach(gamma, throatArea, finalArea):
+
     
     '''
         The Prandtl-Meyer function is a function that relates the Mach number with the deflection angle of a shock wave.
@@ -98,3 +103,8 @@ def prandtlMeyerMach(gamma, throatArea, finalArea):
     prandtlMeyerMach = ((2/util2)*((finalArea/throatArea)**((util2)/(util1)) - 1))**0.5 
 
     return float(prandtlMeyerMach)
+def isentropicCompression(hInit, T0, T, gamma):
+    
+    hNew = float(hInit * (T0 / T)**(1/(gamma-1)))
+
+    return hNew
