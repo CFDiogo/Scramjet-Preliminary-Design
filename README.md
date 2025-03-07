@@ -37,9 +37,9 @@ O código utiliza as seguintes bibliotecas:
 ## Como Executar
 1. Faça o download ou clone o repositório na sua máquina.
 2. Abra o terminal cmd na pasta do repositório.
-3. Digite pip install -r requirements.txt para instalar todas as bibliotecas necessárias.
+3. Digite `pip install -r requirements.txt` para instalar todas as bibliotecas necessárias.
 1. Certifique-se de que os arquivos `functions.py` e `variables.py` estão na mesma pasta que o script principal.
-2. Execute o código main.py em um ambiente Python compatível.
+2. Execute o código `main.py` em um ambiente Python compatível.
 3. Insira os valores solicitados pelo terminal.
 4. O resultado será salvo no arquivo `output.txt`, contendo as propriedades calculadas em cada etapa do processo.
 
